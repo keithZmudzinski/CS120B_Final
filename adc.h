@@ -1,7 +1,7 @@
 #ifndef __ADC_H__
 #define __ADC_H__
 
-//Handles checking ADC ports
+
 #include <avr/io.h>
 
 void initADC(){
@@ -18,8 +18,8 @@ unsigned char adc_get(unsigned char ch){
 	ADMUX = (ADMUX & 0xF8) | ch; // Assign bottom 3 ADMUX bits to ch
 	
 	ADCSRA |= (1 << ADSC);// Start single conversion
-	
-	while(ADCSRA & (1<<ADSC));
+	unsigned short i = 0;
+	while(ADCSRA & (1<<ADSC));//TO DO: ADD WHILE LOOP TO CATCH ERROR
 	//busy wait until conversion done
 	//When conversion is done, ADSC = 0
 	//AND-ing 1 with ADSC until ADSC = 0
