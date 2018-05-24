@@ -1,7 +1,7 @@
 #ifndef __ADC_H__
 #define __ADC_H__
 
-
+//Handles checking ADC ports
 #include <avr/io.h>
 
 void initADC(){
