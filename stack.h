@@ -1,12 +1,14 @@
 #ifndef __STACK_H__
 #define __STACK_H__
 
+#include "led.h"
+
 struct stack {
-	unsigned char* top;
+	struct color* top;
 	unsigned char size;
 };
 
-void push(struct stack s, unsigned char val){
+void push(struct stack s, struct color val){
 	if(s.size == 0){
 		*(s.top) = val;
 		++s.size;
@@ -16,16 +18,17 @@ void push(struct stack s, unsigned char val){
 	++s.top;
 	*(s.top) = val;
 }
-unsigned short pop(struct stack s){
+struct color pop(struct stack s){
 	if(s.size >0){
-		unsigned char val = *(s.top);
+		struct color val = *(s.top);
 		if(s.size > 1){
 			--s.top;
 		}
 		--s.size;
 		return val;
 	}
-	return 404; //Value too large for char, if get this I know popped too many times
+	struct color x = {1,0,0};
+	return  x;//Can't actually get this due to stepping
 }
 unsigned char empty(struct stack s){
 	if(s.size){return 0x01;}
