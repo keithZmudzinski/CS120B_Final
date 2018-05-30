@@ -173,10 +173,10 @@ void stepColor(struct color* led, signed short val){
 	}
 }
 
-void ani2Digi(unsigned char ani, struct color* led){
+void pot2color(unsigned char ani, struct color* led){
 	unsigned char i = 0;
 	for(i = 0; i < ani; ++i){
-		stepColor(led, 6);
+		stepColor(led, 7);
 	}
 }
 

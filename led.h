@@ -41,7 +41,7 @@ unsigned char getBlue(struct color led);
 void stepColor(struct color* led, signed short val);//USES COLOR POINTER
 
 //converts char to rgb
-void ani2Digi(unsigned char ani, struct color* led);
+void pot2color(unsigned char ani, struct color* led);
 
 //Moves color closer/farther to [0,0,0] or [255,255,255]
 void lightenColor(struct color* led, unsigned char num);
