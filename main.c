@@ -79,8 +79,8 @@ int main(void)
 	tasks[i].period = periodPtt;
 	tasks[i].elapsedTime = tasks[i].period;
 	tasks[i].TickFct = &Tick_Ptt;
-		
-	++i; 
+	
+	++i;
 	tasks[i].state = Dsp_start;
 	tasks[i].period = periodDsp;
 	tasks[i].elapsedTime = tasks[i].period;
@@ -90,9 +90,9 @@ int main(void)
 	TimerSet(tasksPeriodGCD);
 	TimerOn();
 	
-    while(1)
-    {
-    }
+	while(1)
+	{
+	}
 }
 unsigned char tmpC0 = 0x00;
 int Tick_PC(int state){
@@ -100,210 +100,202 @@ int Tick_PC(int state){
 	tmpC0 = !(PINC & 0x01);
 	switch(state){//Transitions
 		case PC_start://Initialize all leds in pick to red
-			for(unsigned char j = 0; j < NUM_LEDS; ++j){
-				setRed(pick + j, 255);
-				setGreen(pick + j, 0);
-				setBlue(pick + j, 0);
-			}
-			custColorStack.size = 0;
-			state = PC_wait;
-			i = 0;
-			break;
+		for(unsigned char j = 0; j < NUM_LEDS; ++j){
+			setRed(pick + j, 255);
+			setGreen(pick + j, 0);
+			setBlue(pick + j, 0);
+		}
+		custColorStack.size = 0;
+		state = PC_wait;
+		i = 0;
+		break;
 		case PC_wait:
-			//A7 = 1;//////////////////////////////////////
-			if(!tmpC0){
-				state = PC_wait;
-			}
-			else if(tmpC0 && pickFlag){//if A7 pushed and in pick mode
-				state = PC_update;
-				struct color custom = {255,0,0};
-				pot2color(adc_get(0), &custom);//Get pot val, convert to color
-				push(&custColorStack, custom);//Push to stack
-				++i;
-			}
-			else{state = PC_wait;}
-			break;
+		if(!tmpC0){
+			state = PC_wait;
+		}
+		else if(tmpC0 && pickFlag){//if A7 pushed and in pick mode
+			state = PC_update;
+			struct color custom = {255,0,0};
+			pot2color(adc_get(0), &custom);//Get pot val, convert to color
+			push(&custColorStack, custom);//Push to stack
+			++i;
+		}
+		else{state = PC_wait;}
+		break;
 		case PC_update:
-			for(unsigned char j = 0; j < NUM_LEDS; ++j){
-				setRed(pick + j, 255);
-				setGreen(pick + j, 0);
-				setBlue(pick + j, 0);
-			}
-			if(tmpC0 && pickFlag){//holding button
-				state = PC_update;
-			}
-			
-			else if(!tmpC0 && i >= 3){//released button, and chosen 3 colors
-				pickFlag = 0;
-				i = 0;
-				state = PC_wait;
-			}
-			else if(!tmpC0 && i < 3){ state = PC_wait;}//released button, not chosen 3 colors
-			break;
+		for(unsigned char j = 0; j < NUM_LEDS; ++j){
+			setRed(pick + j, 255);
+			setGreen(pick + j, 0);
+			setBlue(pick + j, 0);
+		}
+		if(tmpC0 && pickFlag){//holding button
+			state = PC_update;
+		}
+		
+		else if(!tmpC0 && i >= 3){//released button, and chosen 3 colors
+			pickFlag = 0;
+			i = 0;
+			state = PC_wait;
+		}
+		else if(!tmpC0 && i < 3){ state = PC_wait;}//released button, not chosen 3 colors
+		break;
 		default:
-			state = PC_start;
+		state = PC_start;
 	}
 	switch(state){//State actions
 		case PC_start:
-			break;
+		break;
 		case PC_wait://update pick[] with current pot value
-			;struct color tmp = {255,0,0};
-			pot2color(adc_get(0),&tmp);
-			for(unsigned char k = 0; k < NUM_LEDS; ++k){
-				setRed(pick+k,tmp.red);
-				setGreen(pick+k, tmp.green);
-				setBlue(pick+k, tmp.blue);
-			}
+		;struct color tmp = {255,0,0};
+		pot2color(adc_get(0),&tmp);
+		for(unsigned char k = 0; k < NUM_LEDS; ++k){
+			setRed(pick+k,tmp.red);
+			setGreen(pick+k, tmp.green);
+			setBlue(pick+k, tmp.blue);
+		}
 
-			break;
+		break;
 		case PC_update:
-			break;
+		break;
 		default:
-			break;
+		break;
 	}
-	//led_strip_write(pick, NUM_LEDS);
 	return state;
 }
 
 int Tick_Ptt(int state){
 	static unsigned char i = 0x00;
-	//unsigned char A7 = (PINC & 0x01);
+	tmpC0 = !(PINC & 0x01);
 	static struct color c1,c2,c3;
 	switch(state){
 		case Ptt_start:
-			i = 0;
-			state = Ptt_wait;
-			for(unsigned char j = 0; j < NUM_LEDS; ++j){
-				setRed(pattern + j, 255);
-				setGreen(pattern + j, 0);
-				setBlue(pattern + j, 0);
-			}
-			
-			break;
-			
+		i = 0;
+		state = Ptt_wait;
+		for(unsigned char j = 0; j < NUM_LEDS; ++j){
+			setRed(pattern + j, 255);
+			setGreen(pattern + j, 0);
+			setBlue(pattern + j, 0);
+		}
+		
+		break;
+		
 		case Ptt_wait:
-			if(custColorStack.size < 3){
-				state = Ptt_wait;
+		if(custColorStack.size < 3){
+			state = Ptt_wait;
+		}
+		else if(custColorStack.size == 3){
+			c1 = pop(&custColorStack);
+			c2 = pop(&custColorStack);
+			c3 = pop(&custColorStack);
+			//initialize pattern to 3 blocks of colors
+			for(unsigned char j = 0; j < NUM_LEDS; ++j){
+				setRed(pattern + j, c1.red);
+				setGreen(pattern + j, c1.green);
+				setBlue(pattern + j, c1.blue);
 			}
-			else if(custColorStack.size == 3){
-				c1 = pop(&custColorStack);
-				c2 = pop(&custColorStack);
-				c3 = pop(&custColorStack);
-				//initialize pattern to 3 blocks of colors
-				for(unsigned char j = 0; j < NUM_LEDS; ++j){
-					setRed(pattern + j, c1.red);
-					setGreen(pattern + j, c1.green);
-					setBlue(pattern + j, c1.blue);
-				}
-				state = Ptt_rotate;
-			}
-			break;
+			state = Ptt_rotate;
+		}
+		break;
 		case Ptt_rotate:
-			if(!tmpC0){
-				state = Ptt_rotate;
-			}
-			else if(tmpC0 && !pickFlag){
-				state = Ptt_next1;
-			}
-			break;
+		if(!tmpC0){
+			state = Ptt_rotate;
+		}
+		else if(tmpC0 && !pickFlag){
+			state = Ptt_next1;
+		}
+		break;
 		case Ptt_next1:
-			if(tmpC0 && !pickFlag){state = Ptt_next1;}
-			else if(i >= 20){
-				i = 0;
-				pickFlag = 1;
-				state = Ptt_wait;
-			}
-			else if(!tmpC0 && !pickFlag){
-				i = 0;
-				blockLEDS(pattern, NUM_LEDS, c1,c2,c3);
-				state = Ptt_slide;
-			}
-			break;
+		if(tmpC0 && !pickFlag){state = Ptt_next1;}
+		else if(i >= 20){
+			i = 0;
+			pickFlag = 1;
+			state = Ptt_wait;
+		}
+		else if(!tmpC0 && !pickFlag){
+			i = 0;
+			blockLEDS(pattern, NUM_LEDS, c1,c2,c3);
+			state = Ptt_slide;
+		}
+		break;
 		case Ptt_slide:
-			if(!tmpC0){
-				state = Ptt_slide;
-			}
-			else if(tmpC0 && !pickFlag){
-				state = Ptt_next2;
-			}
-			break;
+		if(!tmpC0){
+			state = Ptt_slide;
+		}
+		else if(tmpC0 && !pickFlag){
+			state = Ptt_next2;
+		}
+		break;
 		case Ptt_next2:
-			if(tmpC0 && !pickFlag){state = Ptt_next2;}
-			else if(i >= 20){
-				i = 0;
-				pickFlag = 1;
-				state = Ptt_wait;
-			}
-			else if(!tmpC0 && !pickFlag){
-				i = 0;
-				state = Ptt_pulse;
-			}
-			break;
+		if(tmpC0 && !pickFlag){state = Ptt_next2;}
+		else if(i >= 20){
+			i = 0;
+			pickFlag = 1;
+			state = Ptt_wait;
+		}
+		else if(!tmpC0 && !pickFlag){
+			i = 0;
+			state = Ptt_pulse;
+		}
+		break;
 		case Ptt_pulse:
-			if(!tmpC0){
-				state = Ptt_pulse;
-			}
-			else if(tmpC0 && !pickFlag){
-				state = Ptt_next3;
-			}
-			break;
+		if(!tmpC0){
+			state = Ptt_pulse;
+		}
+		else if(tmpC0 && !pickFlag){
+			state = Ptt_next3;
+		}
+		break;
 		case Ptt_next3:
-			if(tmpC0 && !pickFlag){state = Ptt_next3;}
-			else if(i >= 20){
-				i = 0;
-				pickFlag = 1;
-				state = Ptt_wait;
+		if(tmpC0 && !pickFlag){state = Ptt_next3;}
+		else if(i >= 20){
+			i = 0;
+			pickFlag = 1;
+			state = Ptt_wait;
+		}
+		else if(!tmpC0 && !pickFlag){
+			i = 0;
+			for(unsigned char j = 0; j < NUM_LEDS; ++j){
+				setRed(pattern + j, c1.red);
+				setGreen(pattern + j, c1.green);
+				setBlue(pattern + j, c1.blue);
 			}
-			else if(!tmpC0 && !pickFlag){
-				i = 0;
-				for(unsigned char j = 0; j < NUM_LEDS; ++j){
-					setRed(pattern + j, c1.red);
-					setGreen(pattern + j, c1.green);
-					setBlue(pattern + j, c1.blue);
-				}
-				state = Ptt_rotate;
-			}
-			break;
+			state = Ptt_rotate;
+		}
+		break;
 		default:
-			state = Ptt_start;
-			break;
+		state = Ptt_start;
+		break;
 	}
 	switch(state){
 		case Ptt_start:
-			break;
+		break;
 		case Ptt_wait:
-			break;
+		break;
 		case Ptt_rotate:
-			rotate(pattern, NUM_LEDS);
-			break;
+		rotate(pattern, NUM_LEDS);
+		break;
 		case Ptt_next1:
-			++i;
-			break;
+		++i;
+		break;
 		case Ptt_slide:
-			slide(pattern, NUM_LEDS);
-			break;
+		slide(pattern, NUM_LEDS);
+		break;
 		case Ptt_next2:
-			++i;
-			break;
+		++i;
+		break;
 		case Ptt_pulse:
-			pulse(pattern, NUM_LEDS);
-			break;
+		pulse(pattern, NUM_LEDS);
+		break;
 		case Ptt_next3:
-			++i;
-			break;
+		++i;
+		break;
 		default:
-			break;
+		break;
 	}
 	return state;
 }
 
-int Tick_Dsp(int state){//JUST DONE SO I CAN TEST 
-	struct color arr[NUM_LEDS];
-	for(unsigned char j = 0; j < NUM_LEDS; ++j){
-		setRed(arr + j, 255);
-		setGreen(arr + j, 0);
-		setBlue(arr + j, 0);
-	}
+int Tick_Dsp(int state){//JUST DONE SO I CAN TEST
 	if(pickFlag){led_strip_write(pick, NUM_LEDS);}
 	else{led_strip_write(pattern,NUM_LEDS);}
 	return state;
