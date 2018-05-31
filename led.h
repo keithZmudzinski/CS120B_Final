@@ -34,8 +34,6 @@ unsigned char getRed(struct color led);
 void setBlue(struct color* led,unsigned char val);//USES COLOR POINTER
 unsigned char getBlue(struct color led);
 
-
-
 //Will change color by specified step value, won't go past [0,0,0] or [255,255,255]
 //ORDER OF COLORS: R->RG->G->GB->B->RB->R
 void stepColor(struct color* led, signed short val);//USES COLOR POINTER
@@ -47,5 +45,10 @@ void pot2color(unsigned char ani, struct color* led);
 void lightenColor(struct color* led, unsigned char num);
 void darkenColor(struct color* led, unsigned char num);
 
-
+//makes strip into blocks of chosen 3 colors
+void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct color c2, struct color c3);
+//The three pre-set patterns that can be displayed
+void rotate(struct color* arr, unsigned char size);
+void slide(struct color* arr, unsigned char size);
+void pulse(struct color* arr, unsigned char size);
 #endif

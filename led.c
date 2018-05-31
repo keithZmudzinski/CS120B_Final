@@ -176,8 +176,57 @@ void stepColor(struct color* led, signed short val){
 void pot2color(unsigned char ani, struct color* led){
 	unsigned char i = 0;
 	for(i = 0; i < ani; ++i){
-		stepColor(led, 7);
+		stepColor(led, 6);
 	}
 }
+
+void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct color c2, struct color c3){
+	for(unsigned char j = 0x00; j <size; ++j){
+		if(j < size/3){
+			setRed(arr + j, c1.red);
+			setGreen(arr + j, c1.green);
+			setBlue(arr + j, c1.blue);
+		}
+		else if(j < 2*(size/3)){
+			setRed(arr + j, c2.red);
+			setGreen(arr + j, c2.green);
+			setBlue(arr + j, c2.blue);
+		}
+		else if(j < size){
+			setRed(arr + j, c3.red);
+			setGreen(arr + j, c3.green);
+			setBlue(arr + j, c3.blue);
+		}
+	}
+}
+
+
+void rotate(struct color* arr, unsigned char size){
+	for(unsigned char i = 0; i < size; ++i){
+		stepColor(arr + i, 4);
+	}
+}
+
+void slide(struct color* arr, unsigned char size){
+	struct color end = arr[size-1];
+	for(unsigned char i = size-1; i > 0; --i){
+		arr[i].red = arr[i-1].red;
+		arr[i].green = arr[i-1].green;
+		arr[i].blue = arr[i-1].blue;
+	}
+	arr[0].red = end.red;
+	arr[0].blue = end.blue;
+	arr[0].green = end.green;
+}
+
+void pulse(struct color* arr, unsigned char size){
+	//JUST TEMPORARY, MUST CHANGE TO ACTUAL FUNCTION
+	for(unsigned char i = 0; i < size; ++i){
+		setRed(arr + i, 255);
+		setGreen(arr + i, 0);
+		setBlue(arr + i, 0);
+	}
+}
+
 
 
