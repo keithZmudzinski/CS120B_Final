@@ -12,7 +12,7 @@ void initADC(){
 	//ADPS[2:1]: Use prescalar of 64 (8MHz / 64 = 125kHz)
 	//ADEN: Enable ADC
 }
-
+//Reads specified ch analog value, return digital
 unsigned char adc_get(unsigned char ch){
 	ch &= 0x07;  // Make sure ch at max is 7
 	ADMUX = (ADMUX & 0xF8) | ch; // Assign bottom 3 ADMUX bits to ch
