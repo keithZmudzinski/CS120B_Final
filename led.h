@@ -42,8 +42,11 @@ void stepColor(struct color* led, signed short val);//USES COLOR POINTER
 void pot2color(unsigned char ani, struct color* led);
 
 //Moves color closer/farther to [0,0,0] or [255,255,255]
-void lightenColor(struct color* led, unsigned char num);
-void darkenColor(struct color* led, unsigned char num);
+void brightenColor(struct color* reference,struct color* arr, unsigned char num);
+void darkenColor(struct color* reference,struct color* arr, unsigned char num);
+
+//Sets whole arr to single color c
+void solidLEDS(struct color* arr, struct color c, unsigned char size);
 
 //makes strip into blocks of chosen 3 colors
 void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct color c2, struct color c3);

@@ -180,6 +180,71 @@ void pot2color(unsigned char ani, struct color* led){
 	}
 }
 
+void brightenColor(struct color* reference, struct color* arr, unsigned char num){
+	for(unsigned char i = 0x00; i < num; ++i){
+		if(reference[i].red >= 245){
+			if(arr[i].red < 255){
+				setRed(arr + i, arr[i].red+1);
+			}
+		}
+		else{
+			setRed(arr + i, arr[i].red + (double)(255-reference[i].red)/10);
+		}
+		if(reference[i].green >= 245){
+			if(arr[i].green < 255){
+				setGreen(arr + i, arr[i].green+1);
+			}
+		}
+		else{
+			setGreen(arr + i, arr[i].green + (double)(255-reference[i].green)/10);
+		}
+		if(reference[i].blue >= 245){
+			if(arr[i].blue < 255){
+				setBlue(arr + i, arr[i].blue+1);
+			}
+		}
+		else{
+			setBlue(arr + i, arr[i].blue + (double)(255-reference[i].blue)/10);
+		}
+	}
+}
+void darkenColor(struct color* reference,struct color* arr, unsigned char num){
+	for(unsigned char i = 0x00; i < num; ++i){
+		if(reference[i].red <= 10){
+			if(arr[i].red > 0){
+				setRed(arr + i, arr[i].red-1);
+			}
+		}
+		else{
+			setRed(arr + i, arr[i].red - reference[i].red/10);
+		}
+		if(reference[i].green <= 10){
+			if(arr[i].green > 0){
+				setGreen(arr + i, arr[i].green-1);
+			}
+		}
+		else{
+			setGreen(arr + i, arr[i].green - reference[i].green/10);
+		}
+		if(reference[i].blue <= 10){
+			if(arr[i].blue > 0){
+				setBlue(arr + i, arr[i].blue-1);
+			}
+		}
+		else{
+			setBlue(arr + i, arr[i].green - reference[i].blue/10);
+		}
+	}
+}
+
+void solidLEDS(struct color* arr, struct color c, unsigned char size){
+	for(unsigned char i = 0; i < size; ++i){
+		setRed(arr + i, c.red);
+		setGreen(arr + i, c.green);
+		setBlue(arr + i, c.blue);
+	}
+}
+
 void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct color c2, struct color c3){
 	for(unsigned char j = 0x00; j <size; ++j){
 		if(j < size/3){
