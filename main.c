@@ -14,13 +14,14 @@ typedef struct task {
 	int (*TickFct)(int); // Function to call for task's tick
 } task;
 
-task tasks[4];
+task tasks[5];
 
-const unsigned char tasksNum = 4;
+const unsigned char tasksNum = 5;
 const unsigned long tasksPeriodGCD = 50;
 const unsigned long periodPC = 50;
 const unsigned long periodPtt = 50;
 const unsigned long periodDsp = 50;
+const unsigned long periodShade = 50;
 const unsigned long periodTmp = 1000;
 
 void TimerISR() {
@@ -46,12 +47,16 @@ int Tick_Dsp(int state);
 enum Tmp_states {Tmp_start, Tmp_sample, Tmp_update};
 int Tick_Tmp(int state);
 
+enum Shd_states{Shd_start, Shd_wait1, Shd_wait2,Shd_off1, Shd_off2};
+int Tick_Shd(int state);
+
 //Global arrays
 struct color pick[NUM_LEDS];
 struct color pattern[NUM_LEDS];
 struct color temp[NUM_LEDS];
-struct color mic[NUM_LEDS];
+struct color offset[NUM_LEDS];
 struct color* LEDS;
+struct color* fSet;
 //Global Stacks
 struct color custColorArr[10];
 struct stack custColorStack = {custColorArr, 0};
@@ -98,6 +103,12 @@ int main(void)
 	tasks[i].period = periodDsp;
 	tasks[i].elapsedTime = tasks[i].period;
 	tasks[i].TickFct = &Tick_Tmp;
+	
+	++i;
+	tasks[i].state = Shd_start;
+	tasks[i].period = periodShade;
+	tasks[i].elapsedTime = tasks[i].period;
+	tasks[i].TickFct = &Tick_Shd;
 	
 	TimerSet(tasksPeriodGCD);
 	TimerOn();
@@ -349,7 +360,7 @@ int Tick_Tmp(int state){
 	}
 	return state;
 }
-//NEED MIC(EITHER PATTERN OR OFF) STATE
+
 int Tick_Dsp(int state){
 	C1 = !(PINC & 0x02);
 	static unsigned char tmpD = 0x00;
@@ -407,7 +418,81 @@ int Tick_Dsp(int state){
 		default:
 			break;
 	}
-	led_strip_write(LEDS, NUM_LEDS); //JUST UNTIL I MAKE OFFSET TASK
+	//led_strip_write(LEDS, NUM_LEDS); //JUST UNTIL I MAKE OFFSET TASK
 	PORTD = tmpD;//This can stay I believe
+	return state;
+}
+
+int Tick_Shd(int state){
+	unsigned char joyStick = adc_get(2);
+	static struct color off[NUM_LEDS];
+	struct color c = {0,0,0};
+	solidLEDS(off, c, NUM_LEDS);
+	switch(state){
+		case Shd_start://copy led values to offset array
+			for(unsigned char i = 0x00; i < NUM_LEDS; ++i){
+				setRed(offset + i, LEDS[i].red);
+				setGreen(offset + i, LEDS[i].green);
+				setBlue(offset + i, LEDS[i].blue);
+			}
+			state = Shd_wait1;
+			fSet = offset;
+			break;
+		case Shd_wait1:
+			if(joyStick >= UPVALUE){
+				brightenColor(LEDS, offset, NUM_LEDS);
+				state = Shd_wait2;
+			}
+			else if(joyStick >= DOWNVALUE){
+				darkenColor(LEDS, offset, NUM_LEDS);
+				state = Shd_wait2;
+			}
+			else if(joyStick >= LEFTVALUE){
+				for(unsigned char i = 0x00;i < NUM_LEDS; ++i){
+					setRed(offset + i, LEDS[i].red);
+					setGreen(offset + i, LEDS[i].green);
+					setBlue(offset + i, LEDS[i].blue);
+				}
+				state = Shd_wait2;
+			}
+			else if(joyStick >= RIGHTVALUE){
+				fSet = off;
+				state = Shd_off1;
+			}
+			else{
+				state = Shd_wait1;
+			}
+			break;
+		case Shd_wait2:
+			if(joyStick){
+				state = Shd_wait2;
+			}
+			else{
+				state = Shd_wait1;
+			}
+			break;
+		case Shd_off1:
+			if(joyStick){
+				state = Shd_off1;
+			}
+			else{
+				state = Shd_off2;
+			}
+			break;
+		case Shd_off2:
+			if(joyStick){
+				state = Shd_wait1;
+				fSet = offset;
+			}
+			else{
+				state = Shd_off2;
+			}
+			break;
+		default:
+			state = Shd_start;
+			break;
+		
+	}
+	led_strip_write(fSet,NUM_LEDS);
 	return state;
 }
