@@ -1,4 +1,6 @@
 #include <avr/io.h>
+#include <stdlib.h>
+#include <time.h>
 #include "led.h"
 #include "timer.h"
 #include "adc.h"
@@ -89,6 +91,7 @@ int main(void)
 	
 	initADC();
 	initJoyStick();
+	srand( time(NULL) );
 	
 	unsigned char i = 0;
 	tasks[i].state = PC_start;
@@ -268,6 +271,7 @@ int Tick_Ptt(int state){
 			}
 			else if(!C0 && !pickFlag && dspFlag == 0x01){
 				i = 0;
+				solidLEDS(pattern,c3,NUM_LEDS);
 				state = Ptt_pulse;
 			}
 			break;
@@ -318,7 +322,7 @@ int Tick_Ptt(int state){
 			++i;
 			break;
 		case Ptt_pulse:
-			pulse(pattern, c3, NUM_LEDS);
+			pulse(pattern, c1, c2, c3, NUM_LEDS);
 			break;
 		case Ptt_next3:
 			++i;
