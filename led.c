@@ -305,8 +305,29 @@ void slide(struct color* arr, unsigned char size){
 	arr[0].green = end.green;
 }
 
-void pulse(struct color* arr,struct color c1, unsigned char size){
-	solidLEDS(arr,c1,NUM_LEDS);
+void pulse(struct color* arr,struct color c1, struct color c2,struct color c3,unsigned char size){
+	unsigned char index = rand() % size;
+	unsigned long p = rand() % 1000;
+	if(p < 100){
+		setRed(arr + index, 0);
+		setGreen(arr + index, 0);
+		setBlue(arr + index, 0);
+	}
+	else if(p < 400){
+		setRed(arr + index, c1.red);
+		setGreen(arr + index, c1.green);
+		setBlue(arr + index, c1.blue);
+	}
+	else if(p < 700){
+		setRed(arr + index, c2.red);
+		setGreen(arr + index, c2.green);
+		setBlue(arr + index, c2.blue);
+	}
+	else{
+		setRed(arr + index, c3.red);
+		setGreen(arr + index, c3.green);
+		setBlue(arr + index, c3.blue);
+	}
 }
 
 

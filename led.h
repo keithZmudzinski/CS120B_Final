@@ -11,6 +11,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <stdlib.h>
 
 
 
@@ -55,5 +56,5 @@ void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct co
 //The three pre-set patterns that can be displayed
 void rotate(struct color* arr, unsigned char size);
 void slide(struct color* arr, unsigned char size);
-void pulse(struct color* arr,struct color c1, unsigned char size);
+void pulse(struct color* arr,struct color c1, struct color c2,struct color c3,unsigned char size);
 #endif
