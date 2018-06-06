@@ -48,10 +48,12 @@ void darkenColor(struct color* reference,struct color* arr, unsigned char num);
 //Sets whole arr to single color c
 void solidLEDS(struct color* arr, struct color c, unsigned char size);
 
+//Offset LEDS
+void offsetUpdate(struct color* offsetArr, struct color* reference, struct color* fSet, signed char count);
 //makes strip into blocks of chosen 3 colors
 void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct color c2, struct color c3);
 //The three pre-set patterns that can be displayed
 void rotate(struct color* arr, unsigned char size);
 void slide(struct color* arr, unsigned char size);
-void pulse(struct color* arr, unsigned char size);
+void pulse(struct color* arr,struct color c1, unsigned char size);
 #endif

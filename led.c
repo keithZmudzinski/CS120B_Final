@@ -1,6 +1,5 @@
 #include "led.h"
 
-
 unsigned char SetBit(unsigned char x, unsigned char k, unsigned char b) {
 	return (b ?  (x | (0x01 << k))  :  (x & ~(0x01 << k)) );
 	//   Set bit to 1           Set bit to 0
@@ -94,29 +93,33 @@ void __attribute__((noinline)) led_strip_write(struct color* colors, unsigned in
 	_delay_us(80);  // Send the reset signal.
 }
 
-
 void setGreen(struct color* led, unsigned char val){
-	led->green  = val;
+	if(val > 255){led->green = 255;}
+	else if(val < 0){led->green = 0;}
+	else{led->green  = val;}
 }
 unsigned char getGreen(struct color led){
 	return led.green;
 }
 
 void setRed(struct color* led,unsigned char val){
-	led->red = val;
+	if(val > 255){led->red = 255;}
+	else if(val < 0){led->red = 0;}
+	else{led->red  = val;}
+	
 }
 unsigned char getRed(struct color led){
 	return led.red;
 }
 
 void setBlue(struct color* led,unsigned char val){
-	led->blue = val;
+	if(val > 255){led->blue = 255;}
+	else if(val < 0){led->blue = 0;}
+	else{led->blue  = val;}
 }
 unsigned char getBlue(struct color led){
 	return led.blue;
 }
-
-
 
 void stepColor(struct color* led, signed short val){
 	unsigned char red = getRed(*led);
@@ -245,6 +248,25 @@ void solidLEDS(struct color* arr, struct color c, unsigned char size){
 	}
 }
 
+void offsetUpdate(struct color* offsetArr, struct color* reference, struct color* fSet, signed char count){
+	if(count < 0){
+		count *= -1;
+		for(unsigned char i = 0x00; i < count; ++i){
+			darkenColor(reference, offsetArr, NUM_LEDS);
+		}
+		fSet = offsetArr;
+	}
+	else if(count > 0){
+		for( unsigned char i = 0x00; i < count; ++i){
+			brightenColor(reference, offsetArr, NUM_LEDS);
+		}
+		fSet = offsetArr;
+	}
+	else{
+		fSet = reference;
+	}
+}
+
 void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct color c2, struct color c3){
 	for(unsigned char j = 0x00; j <size; ++j){
 		if(j < size/3){
@@ -265,7 +287,6 @@ void blockLEDS(struct color* arr, unsigned char size, struct color c1, struct co
 	}
 }
 
-
 void rotate(struct color* arr, unsigned char size){
 	for(unsigned char i = 0; i < size; ++i){
 		stepColor(arr + i, 4);
@@ -284,13 +305,8 @@ void slide(struct color* arr, unsigned char size){
 	arr[0].green = end.green;
 }
 
-void pulse(struct color* arr, unsigned char size){
-	//JUST TEMPORARY, MUST CHANGE TO ACTUAL FUNCTION
-	for(unsigned char i = 0; i < size; ++i){
-		setRed(arr + i, 255);
-		setGreen(arr + i, 0);
-		setBlue(arr + i, 0);
-	}
+void pulse(struct color* arr,struct color c1, unsigned char size){
+	solidLEDS(arr,c1,NUM_LEDS);
 }
 
 
