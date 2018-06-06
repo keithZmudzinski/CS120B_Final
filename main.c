@@ -3,8 +3,8 @@
 #include "timer.h"
 #include "adc.h"
 #include "stack.h"
+#include "joystick.h"
 
-//TO DO: ADD OFFSET AND ON OFF STATE, GET BUZZER INPUT
 
 
 typedef struct task {
@@ -35,6 +35,7 @@ void TimerISR() {
 	}
 }
 
+//Task States
 enum PC_states {PC_start, PC_wait, PC_update};
 int Tick_PC(int state);
 
@@ -47,29 +48,37 @@ int Tick_Dsp(int state);
 enum Tmp_states {Tmp_start, Tmp_sample, Tmp_update};
 int Tick_Tmp(int state);
 
-enum Shd_states{Shd_start, Shd_wait1, Shd_wait2,Shd_off1, Shd_off2};
+enum Shd_states{Shd_start, Shd_wait1, Shd_wait2,Shd_off1, Shd_off2, Shd_off3};
 int Tick_Shd(int state);
 
 //Global arrays
-struct color pick[NUM_LEDS];
-struct color pattern[NUM_LEDS];
-struct color temp[NUM_LEDS];
-struct color offset[NUM_LEDS];
-struct color* LEDS;
-struct color* fSet;
+struct color pick[NUM_LEDS];//Holds potentiometer values
+struct color pattern[NUM_LEDS];//Holds pattern values
+struct color temp[NUM_LEDS];//Holds temp values
+struct color offset[NUM_LEDS];//Holds LEDS values + some offset
+struct color* LEDS;//directed to either pick/pattern/temp in display task
+struct color* fSet;//directed to either LEDS or offset in shade task
 //Global Stacks
 struct color custColorArr[10];
-struct stack custColorStack = {custColorArr, 0};
-struct color tempArr[10];
-struct stack tempStack = {tempArr, 0};
+struct stack custColorStack = {custColorArr, 0};//Holds the three custom colors
+//struct color tempArr[10];
+//struct stack tempStack = {tempArr, 0};
 //Global Variables
-unsigned char dspFlag = 0x01; //1 means displaying potentiometer, 2 displaying temp, 3 displaying mic, 0 for transition purposes
-unsigned char pickFlag = 0x01;
-unsigned char C0 = 0x00;
-unsigned char C1 = 0x00;
+unsigned char dspFlag = 0x01; //1 means displaying potentiometer, 2 displaying temp, 0 for transition purposes
+unsigned char pickFlag = 0x01;//used to tell if picking custom colors or displaying patterns 
+unsigned char C0 = 0x00;//cycle patterns displayed, hold to pick custom colors
+unsigned char C1 = 0x00;//cycle input displayed, pot patterns or temp
+signed short UDCenter = 0x00;//used in joystick calibration
+signed short LRCenter = 0x00;//used in joystick calibration
 //Defines
+#define LRPin 2
+#define UDPin 3
 
-
+void initJoyStick(){
+	UDCenter = adc_get_signed(UDPin);
+	LRCenter = adc_get_signed(LRPin);
+	return;
+}
 
 int main(void)
 {
@@ -79,6 +88,7 @@ int main(void)
 	DDRD = 0xFF; PORTD = 0x00; // Set D to output
 	
 	initADC();
+	initJoyStick();
 	
 	unsigned char i = 0;
 	tasks[i].state = PC_start;
@@ -146,8 +156,9 @@ int Tick_PC(int state){
 			else{state = PC_wait;}
 			break;
 		case PC_update:
+			//When color picked, flash off so user knows it registered
 			for(unsigned char j = 0; j < NUM_LEDS; ++j){
-				setRed(pick + j, 255);
+				setRed(pick + j, 0);
 				setGreen(pick + j, 0);
 				setBlue(pick + j, 0);
 			}
@@ -307,7 +318,7 @@ int Tick_Ptt(int state){
 			++i;
 			break;
 		case Ptt_pulse:
-			pulse(pattern, NUM_LEDS);
+			pulse(pattern, c3, NUM_LEDS);
 			break;
 		case Ptt_next3:
 			++i;
@@ -403,7 +414,7 @@ int Tick_Dsp(int state){
 			break;
 		case Dsp_temp1:
 			dspFlag = 0x02;
-			tmpD = 0x40;
+			tmpD = 0x02;
 			LEDS = temp;
 			break;
 		case Dsp_temp2:
@@ -418,18 +429,29 @@ int Tick_Dsp(int state){
 		default:
 			break;
 	}
-	//led_strip_write(LEDS, NUM_LEDS); //JUST UNTIL I MAKE OFFSET TASK
 	PORTD = tmpD;//This can stay I believe
 	return state;
 }
 
 int Tick_Shd(int state){
-	unsigned char joyStick = adc_get(2);
+	
+	//Getting joystick direction
+	signed short currUD = adc_get_signed(UDPin);
+	signed short currLR = adc_get_signed(LRPin);
+	unsigned char up = getUp(UDCenter,currUD);
+	unsigned char down = getDown(UDCenter, currUD);
+	unsigned char left = getLeft(LRCenter, currLR);
+	unsigned char right = getRight(LRCenter, currLR);
+	
+	//count variable to keep track of times to dim/brighten
+	static signed char count = 0x00;
+	
+	//initializing array of LEDS to {0,0,0}, used to display 'off'
 	static struct color off[NUM_LEDS];
 	struct color c = {0,0,0};
 	solidLEDS(off, c, NUM_LEDS);
-	switch(state){
-		case Shd_start://copy led values to offset array
+	switch(state){//State Transitions/Mealy Actions
+		case Shd_start://copy current led values to offset array
 			for(unsigned char i = 0x00; i < NUM_LEDS; ++i){
 				setRed(offset + i, LEDS[i].red);
 				setGreen(offset + i, LEDS[i].green);
@@ -439,15 +461,28 @@ int Tick_Shd(int state){
 			fSet = offset;
 			break;
 		case Shd_wait1:
-			if(joyStick >= UPVALUE){
-				brightenColor(LEDS, offset, NUM_LEDS);
+			//offset must be reset so for-loop works appropriately 
+			for(unsigned char i = 0x00; i < NUM_LEDS; ++i){
+				setRed(offset + i, LEDS[i].red);
+				setGreen(offset + i, LEDS[i].green);
+				setBlue(offset + i, LEDS[i].blue);
+			}
+			if(up){
+				if(count < 9){
+					++count;
+				}
+				offsetUpdate(offset,LEDS,fSet,count);
 				state = Shd_wait2;
 			}
-			else if(joyStick >= DOWNVALUE){
-				darkenColor(LEDS, offset, NUM_LEDS);
+			else if(down){
+				if(count > -9){
+					--count;
+				}
+				offsetUpdate(offset,LEDS,fSet,count);
 				state = Shd_wait2;
 			}
-			else if(joyStick >= LEFTVALUE){
+			else if(left){
+				count = 0;
 				for(unsigned char i = 0x00;i < NUM_LEDS; ++i){
 					setRed(offset + i, LEDS[i].red);
 					setGreen(offset + i, LEDS[i].green);
@@ -455,37 +490,59 @@ int Tick_Shd(int state){
 				}
 				state = Shd_wait2;
 			}
-			else if(joyStick >= RIGHTVALUE){
+			else if(right){//Right to turn LEDS off
 				fSet = off;
 				state = Shd_off1;
 			}
-			else{
+			else{//If no input, still need to update offset with current LEDS array
+				offsetUpdate(offset,LEDS,fSet,count);
 				state = Shd_wait1;
 			}
 			break;
 		case Shd_wait2:
-			if(joyStick){
+			if(left || right || up || down){//joystick held in any direction
+				
 				state = Shd_wait2;
 			}
 			else{
 				state = Shd_wait1;
 			}
 			break;
-		case Shd_off1:
-			if(joyStick){
+		case Shd_off1://Do nothing while still right
+			if(left || right || up || down){//joystick held in any direction
 				state = Shd_off1;
 			}
 			else{
 				state = Shd_off2;
 			}
 			break;
-		case Shd_off2:
-			if(joyStick){
+		case Shd_off2://Upon any input from joystick, display offset colors
+			if(left || up || down){//joystick held in any direction except right
 				state = Shd_wait1;
+				fSet = offset;
+			}
+			else if(right){
+				state = Shd_off3;
+				//set offset back to LED values
+				for(unsigned char i = 0x00;i < NUM_LEDS; ++i){
+					setRed(offset + i, LEDS[i].red);
+					setGreen(offset + i, LEDS[i].green);
+					setBlue(offset + i, LEDS[i].blue);
+				}
+				//update offset again, to account for pot changing while off
+				offsetUpdate(offset,LEDS,fSet,count);
 				fSet = offset;
 			}
 			else{
 				state = Shd_off2;
+			}
+			break;
+		case Shd_off3:
+			if(right){
+				state = Shd_off3;
+			}
+			else{
+				state = Shd_wait1;
 			}
 			break;
 		default:
