@@ -1,11 +1,10 @@
 # CS120B_Final Lab Project
 ## LED controller
----
+
 ## Purpose
 This project practices embedded systems design patterns, while incorporating new software/hardware complexities not learned in class.
 
 ## Controls
----
 ### Startup
 The system starts in what is called the "Pick state". While in this state, varying the potentiometer will change the output color.
 Pressing the "Select" button to the left of the potentiometer will choose the current color as the first of three custom colors the user can select.
@@ -19,5 +18,4 @@ At any time, the shade of the displayed color from any input can be either incre
 Pressing the joystick to the right once and releasing will turn the LED strip off, and from that state, any input from the joystick will turn the strip back on again, retaining the offset and color that was displayed before the strip was turned off.
 
 ## Notes
----
 The system does pause while recieving user input, meaning, if a button is held down, the LED strip will update to show that change, but then will wait until the button is released to continue updating (this goes for the joystick as well).
