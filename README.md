@@ -19,3 +19,8 @@ Pressing the joystick to the right once and releasing will turn the LED strip of
 
 ## Notes
 The system does pause while recieving user input, meaning, if a button is held down, the LED strip will update to show that change, but then will wait until the button is released to continue updating (this goes for the joystick as well).
+
+## Video Demonstration
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=5wlBFIQSRrM"
+target="_blank"><img src="http://img.youtube.com/vi/5wlBFIQSRrM/0.jpg" 
+alt="120B LED Light Strip Controller" width="240" height="180" border="10" /></a>
